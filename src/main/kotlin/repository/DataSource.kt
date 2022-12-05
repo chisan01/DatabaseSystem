@@ -12,20 +12,30 @@ class DataSource(
     private val dbPassword: String
 ) {
 
-    var connection: Connection? = null
+    var _connection: Connection? = null
+
+    val connection: Connection?
         get() {
-            connection?.apply { return this }
+            _connection?.apply { return this }
 
             Class.forName("com.mysql.cj.jdbc.Driver")
-            field = DriverManager.getConnection(
+            _connection = DriverManager.getConnection(
                 "jdbc:mysql://$ServerIPAddress:$ServerPortNum/$DATABASE_NAME",
                 dbUser,
                 dbPassword
             )
-            return field
+            if(_connection == null) throw Exception("데이터베이스 연결 실패")
+            return _connection
         }
 
-    fun releaseConnection() {
+    @Override
+    fun finalize() {
+        releaseConnection()
+    }
+
+    private fun releaseConnection() {
+        println("데이터베이스 연결 해제")
         connection?.close()
+        _connection = null
     }
 }
