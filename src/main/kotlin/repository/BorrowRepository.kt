@@ -1,6 +1,7 @@
 package repository
 
 import entity.Borrow
+import java.sql.ResultSet
 import java.sql.Statement
 
 class BorrowRepository(dataSource: DataSource) {
@@ -34,17 +35,33 @@ class BorrowRepository(dataSource: DataSource) {
 
         val result = mutableListOf<Borrow>()
         while (rs.next()) {
-            result.add(
-                Borrow(
-                    id = rs.getInt(1),
-                    memberId = rs.getInt(2),
-                    serialNumber = rs.getInt(3),
-                    borrowStartDate = rs.getDate(4),
-                    countOfDueDateExtension = rs.getInt(5),
-                    returnDate = rs.getDate(6)
-                )
-            )
+            result.add(createBorrowFromResultSet(rs))
         }
         return result
+    }
+
+    fun findAllBySerialNumber(serialNumber: Int): List<Borrow> {
+        if (con == null) throw Exception("데이터베이스 연결 실패")
+
+        val stmt = con.prepareStatement("SELECT * FROM borrow WHERE serial_number = ?")
+        stmt.setInt(1, serialNumber)
+        val rs = stmt.executeQuery()
+
+        val result = mutableListOf<Borrow>()
+        while (rs.next()) {
+            result.add(createBorrowFromResultSet(rs))
+        }
+        return result
+    }
+
+    private fun createBorrowFromResultSet(rs: ResultSet): Borrow {
+        return Borrow(
+            id = rs.getInt(1),
+            memberId = rs.getInt(2),
+            serialNumber = rs.getInt(3),
+            borrowStartDate = rs.getDate(4),
+            countOfDueDateExtension = rs.getInt(5),
+            returnDate = rs.getDate(6)
+        )
     }
 }

@@ -15,8 +15,9 @@ class BookRepository(dataSource: DataSource) {
             Statement.RETURN_GENERATED_KEYS
         )
         pstmt.setInt(1, book.bookNumber)
+        pstmt.executeUpdate()
         return Book(
-            serialNumber = pstmt.executeUpdate(),
+            serialNumber = pstmt.generatedKeys.run { if(next()) getInt(1) else null },
             bookNumber = book.bookNumber
         )
     }
