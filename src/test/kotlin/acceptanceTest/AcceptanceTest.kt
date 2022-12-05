@@ -38,11 +38,11 @@ class AcceptanceTest {
         testDataSource.deleteAll()
 
         universityStudent =
-            memberRepository.save(Member(name = "test", password = "1234", job = Job.UNIVERSITY_STUDENT))
+            memberRepository.save(Member(name = "university_student", password = "1234", job = Job.UNIVERSITY_STUDENT))
         graduateStudent =
-            memberRepository.save(Member(name = "test", password = "1234", job = Job.GRADUATE_STUDENT))
+            memberRepository.save(Member(name = "graduate_student", password = "1234", job = Job.GRADUATE_STUDENT))
         professor =
-            memberRepository.save(Member(name = "test", password = "1234", job = Job.PROFESSOR))
+            memberRepository.save(Member(name = "professor", password = "1234", job = Job.PROFESSOR))
 
         bookInfos.clear()
         books.clear()

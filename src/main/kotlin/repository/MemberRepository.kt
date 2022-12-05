@@ -18,8 +18,9 @@ class MemberRepository(dataSource: DataSource) {
         pstmt.setString(1, member.name)
         pstmt.setString(2, member.password)
         pstmt.setString(3, member.job.toString())
+        pstmt.executeUpdate()
         return Member(
-            memberId = pstmt.executeUpdate(),
+            memberId = pstmt.generatedKeys.run { if(next()) getInt(1) else null },
             name = member.name,
             password = member.password,
             job = member.job
