@@ -41,4 +41,15 @@ class Library(dataSource: DataSource) {
             )
         )
     }
+
+    fun `return`(memberId: Int, serialNumber: Int) {
+        val member = memberRepository.findByMemberId(memberId)
+            ?: throw Exception("member doesn't exist")
+        val book = bookRepository.findBySerialNumber(serialNumber)
+            ?: throw Exception("book doesn't exist")
+        if(!borrowRepository.findByMemberIdAndSerialNumber(memberId, serialNumber).any() { it.returnDate == null })
+            throw Exception("해당 회원이 대출하지 않은 도서")
+
+        borrowRepository.returnBook(memberId, serialNumber, Date(System.currentTimeMillis()))
+    }
 }
