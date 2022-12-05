@@ -66,7 +66,14 @@ class AcceptanceTest {
 
     @Test
     fun `대출 가능한 상태의 도서만 대출할 수 있다`() {
-
+        // given
+        library.borrow(universityStudent.memberId!!, books[0].serialNumber!!)
+        // when
+        val thrown = Assertions.catchThrowable {
+            library.borrow(graduateStudent.memberId!!, books[0].serialNumber!!)
+        }
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(Exception::class.java).hasMessageContaining("대출 불가능한 도서")
     }
 
     @Test
@@ -99,7 +106,17 @@ class AcceptanceTest {
 
     @Test
     fun `교수는 동시에 최대 5권까지 대출 가능`() {
-
+        // given
+        for(i in 0..4) {
+            library.borrow(professor.memberId!!, books[i].serialNumber!!)
+        }
+        // when
+        val thrown = Assertions.catchThrowable {
+            library.borrow(professor.memberId!!, books[5].serialNumber!!)
+        }
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(Exception::class.java).hasMessageContaining("대출 가능 횟수 초과")
+        Assertions.assertThat(borrowRepository.findAllByMemberId(professor.memberId!!).size).isEqualTo(5)
     }
 
     @Test
