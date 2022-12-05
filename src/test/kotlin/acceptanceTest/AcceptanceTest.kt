@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import repository.*
 import service.Library
+import java.sql.Date
+import java.util.concurrent.TimeUnit
 
 class AcceptanceTest {
 
@@ -131,18 +133,59 @@ class AcceptanceTest {
     }
 
     @Test
-    fun `반납일 1일 전부터 대출 연장 가능`() {
-
+    fun `도서는 대출일로부터 2주일 안에 반납해야 하고, 반납일을 경과할 시 도서를 반납할때까지 도서관 이용이 제한된다`() {
+        // given
+        borrowRepository.save(
+            Borrow(
+                memberId = graduateStudent.memberId!!,
+                serialNumber = books[0].serialNumber!!,
+                borrowStartDate = Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(20))
+            )
+        )
+        // when
+        val thrown = Assertions.catchThrowable {
+            library.borrow(graduateStudent.memberId!!, books[5].serialNumber!!)
+        }
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(Exception::class.java).hasMessageContaining("연체된 도서로 인해 대출이 제한됩니다")
     }
 
     @Test
     fun `대출 연장시 반납일 1주일 연장`() {
-
+        // given
+        borrowRepository.save(
+            Borrow(
+                memberId = graduateStudent.memberId!!,
+                serialNumber = books[0].serialNumber!!,
+                borrowStartDate = Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(20)),
+                countOfDueDateExtension = 1
+            )
+        )
+        // when
+        val thrown = Assertions.catchThrowable {
+            library.borrow(graduateStudent.memberId!!, books[5].serialNumber!!)
+        }
+        // then
+        Assertions.assertThat(thrown).isNull()
     }
 
     @Test
     fun `대출 연장은 대출마다 최대 1회 가능`() {
-
+        // given
+        borrowRepository.save(
+            Borrow(
+                memberId = graduateStudent.memberId!!,
+                serialNumber = books[0].serialNumber!!,
+                borrowStartDate = Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(20)),
+                countOfDueDateExtension = 1
+            )
+        )
+        // when
+        val thrown = Assertions.catchThrowable {
+            library.extendBorrowDuration(graduateStudent.memberId!!, books[0].serialNumber!!)
+        }
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(Exception::class.java).hasMessageContaining("연장은 최대 1회만 가능합니다")
     }
 
     @Test

@@ -7,6 +7,7 @@ import repository.BorrowRepository
 import repository.DataSource
 import repository.MemberRepository
 import java.sql.Date
+import java.util.concurrent.TimeUnit
 
 class Library(dataSource: DataSource) {
     private val memberRepository = MemberRepository(dataSource)
@@ -18,8 +19,18 @@ class Library(dataSource: DataSource) {
     }
 
     fun getStatusOfBook(serialNumber: Int): BookStatus {
-        return if(borrowRepository.findAllBySerialNumber(serialNumber).any { it.returnDate == null }) BookStatus.BORROWED
-        else  BookStatus.REMAIN
+        return if (borrowRepository.findAllBySerialNumber(serialNumber)
+                .any { it.returnDate == null }
+        ) BookStatus.BORROWED
+        else BookStatus.REMAIN
+    }
+
+    fun hasOverdueBorrowBook(memberId: Int): Boolean {
+        return borrowRepository.findAllByMemberId(memberId).any {
+            it.borrowStartDate.before(
+                Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis((14 + it.countOfDueDateExtension * 7).toLong()))
+            )
+        }
     }
 
     fun borrow(memberId: Int, serialNumber: Int) {
@@ -28,7 +39,9 @@ class Library(dataSource: DataSource) {
         val book = bookRepository.findBySerialNumber(serialNumber)
             ?: throw Exception("book doesn't exist")
 
-        if(getStatusOfBook(serialNumber) != BookStatus.REMAIN) throw Exception("대출 불가능한 도서")
+        if (hasOverdueBorrowBook(memberId)) throw Exception("연체된 도서로 인해 대출이 제한됩니다")
+
+        if (getStatusOfBook(serialNumber) != BookStatus.REMAIN) throw Exception("대출 불가능한 도서")
 
         val curBorrowCntOfMember = getCurBorrowCntOfMember(memberId)
         if (curBorrowCntOfMember >= member.job.maxBorrowCnt) throw Exception("대출 가능 횟수 초과")
@@ -47,9 +60,28 @@ class Library(dataSource: DataSource) {
             ?: throw Exception("member doesn't exist")
         val book = bookRepository.findBySerialNumber(serialNumber)
             ?: throw Exception("book doesn't exist")
-        if(!borrowRepository.findByMemberIdAndSerialNumber(memberId, serialNumber).any() { it.returnDate == null })
+        if (!borrowRepository.findByMemberIdAndSerialNumber(memberId, serialNumber).any() { it.returnDate == null })
             throw Exception("해당 회원이 대출하지 않은 도서")
 
         borrowRepository.returnBook(memberId, serialNumber, Date(System.currentTimeMillis()))
+    }
+
+    fun curBorrowRecord(memberId: Int, serialNumber: Int): Borrow? {
+        val list =
+            borrowRepository.findByMemberIdAndSerialNumber(memberId, serialNumber).filter() { it.returnDate == null }
+                .toList()
+        return if (list.isEmpty()) null else list[0]
+    }
+
+    fun extendBorrowDuration(memberId: Int, serialNumber: Int) {
+        val member = memberRepository.findByMemberId(memberId)
+            ?: throw Exception("member doesn't exist")
+        val book = bookRepository.findBySerialNumber(serialNumber)
+            ?: throw Exception("book doesn't exist")
+        val borrow = curBorrowRecord(memberId, serialNumber)
+            ?: throw Exception("해당 회원이 대출하지 않은 도서")
+
+        if (borrow.countOfDueDateExtension > 0) throw Exception("연장은 최대 1회만 가능합니다")
+        borrowRepository.extendBorrowDuration(memberId, serialNumber)
     }
 }

@@ -13,17 +13,19 @@ class BorrowRepository(dataSource: DataSource) {
         if (con == null) throw Exception("데이터베이스 연결 실패")
 
         val pstmt = con.prepareStatement(
-            "INSERT INTO borrow(member_id, serial_number, borrow_start_date) values (?, ?, ?)",
+            "INSERT INTO borrow(member_id, serial_number, borrow_start_date, count_of_due_date_extension) values (?, ?, ?, ?)",
             Statement.RETURN_GENERATED_KEYS
         )
         pstmt.setInt(1, borrow.memberId)
         pstmt.setInt(2, borrow.serialNumber)
         pstmt.setDate(3, borrow.borrowStartDate)
+        pstmt.setInt(4, borrow.countOfDueDateExtension)
         return Borrow(
             id = pstmt.executeUpdate(),
             memberId = borrow.memberId,
             serialNumber = borrow.serialNumber,
-            borrowStartDate = borrow.borrowStartDate
+            borrowStartDate = borrow.borrowStartDate,
+            countOfDueDateExtension = borrow.countOfDueDateExtension
         )
     }
 
@@ -82,6 +84,19 @@ class BorrowRepository(dataSource: DataSource) {
         stmt.setDate(1, returnDate)
         stmt.setInt(2, memberId)
         stmt.setInt(3, serialNumber)
+        stmt.execute()
+    }
+
+    fun extendBorrowDuration(memberId: Int, serialNumber: Int) {
+        if (con == null) throw Exception("데이터베이스 연결 실패")
+
+        val stmt = con.prepareStatement(
+            "UPDATE borrow SET count_of_due_date_extension = 1 " +
+                    "WHERE member_id = ? " +
+                    "AND serial_number = ?"
+        )
+        stmt.setInt(1, memberId)
+        stmt.setInt(2, serialNumber)
         stmt.execute()
     }
 
