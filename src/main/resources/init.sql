@@ -1,6 +1,6 @@
 /* root 계정으로 접속, LIBRARY 데이터베이스 생성, LIBRARY 계정 생성 */
 DROP database IF EXISTS library;
-DROP USER IF EXISTS library@localhost;
+DROP USER IF EXISTS library@'%';
 
 CREATE database library;
 CREATE USER library@localhost IDENTIFIED BY '1234';
