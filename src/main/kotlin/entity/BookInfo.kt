@@ -1,12 +1,9 @@
 package entity
 
-import java.sql.Timestamp
-import java.util.concurrent.SubmissionPublisher
-
 data class BookInfo(
-    val bookNumber: Int,
+    val bookNumber: Int? = null,
     val title: String,
     val author: String,
     val publisher: String,
-    val publishYear: String
+    val publishYear: Int
 )

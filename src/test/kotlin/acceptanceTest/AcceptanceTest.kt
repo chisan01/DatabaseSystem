@@ -7,8 +7,8 @@ import entity.Member
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import repository.DataSource
-import repository.MemberRepository
+import repository.*
+import service.Library
 
 class AcceptanceTest {
 
@@ -22,51 +22,64 @@ class AcceptanceTest {
     private val library = Library(testDataSource)
 
     private val memberRepository = MemberRepository(testDataSource)
+    private val bookInfoRepository = BookInfoRepository(testDataSource)
+    private val bookRepository = BookRepository(testDataSource)
+    private val borrowRepository = BorrowRepository(testDataSource)
+
+    lateinit var universityStudent: Member
+    lateinit var graduateStudent: Member
+    lateinit var professor: Member
+
+    val bookInfos = mutableListOf<BookInfo>()
+    val books = mutableListOf<Book>()
 
     @BeforeEach
     internal fun setUp() {
-        val university_student =
-            memberRepository.addMember(Member(name = "test", password = "1234", job = Job.UNIVERSITY_STUDENT))
-        val graduate_student =
-            memberRepository.addMember(Member(name = "test", password = "1234", job = Job.GRADUATE_STUDENT))
-        val professor =
-            memberRepository.addMember(Member(name = "test", password = "1234", job = Job.PROFESSOR))
+        testDataSource.deleteAll()
 
-        val bookInfos = mutableListOf<BookInfo>()
-        val books = mutableListOf<Book>()
+        universityStudent =
+            memberRepository.save(Member(name = "test", password = "1234", job = Job.UNIVERSITY_STUDENT))
+        graduateStudent =
+            memberRepository.save(Member(name = "test", password = "1234", job = Job.GRADUATE_STUDENT))
+        professor =
+            memberRepository.save(Member(name = "test", password = "1234", job = Job.PROFESSOR))
+
+        bookInfos.clear()
+        books.clear()
         repeat(5) {
             val bookInfo = bookInfoRepository.addBookInfo(
                 BookInfo(
                     title = "test$it",
                     author = "chisan",
                     publisher = "출판사",
-                    publishYear = "2022"
+                    publishYear = 2022
                 )
             )
             bookInfos.add(bookInfo)
 
             repeat(2) {
-                val book = bookRepository.addBook(Book(bookNumber = bookInfo.bookNumber))
+                val book = bookRepository.save(Book(bookNumber = bookInfo.bookNumber!!))
                 books.add(book)
             }
         }
     }
 
     @Test
+    fun `대출 가능한 상태의 도서만 대출할 수 있다`() {
+
+    }
+
+    @Test
     fun `학부생은 동시에 최대 1권까지 대출 가능`() {
         // given
-        library.borrow(university_student, books.get(0))
-        library.borrow(university_student, books.get(2))
-
+        library.borrow(universityStudent.memberId!!, books[0].serialNumber!!)
         // when
         val thrown = Assertions.catchThrowable {
-            libraryibrary.borrow(university_student, books.get(3))
+            library.borrow(universityStudent.memberId!!, books[3].serialNumber!!)
         }
-
         // then
-        Assertions.assertThat(thrown).isInstanceOf(Exception::class.java)
-            .hasMessageContaining("대출 가능 횟수 초과")
-        Assertions.assertThat(borrowRepository.findByMemberId().size()).isEqualTo(2)
+        Assertions.assertThat(thrown).isInstanceOf(Exception::class.java).hasMessageContaining("대출 가능 횟수 초과")
+        Assertions.assertThat(borrowRepository.findAllByMemberId(universityStudent.memberId!!).size).isEqualTo(1)
     }
 
     @Test
