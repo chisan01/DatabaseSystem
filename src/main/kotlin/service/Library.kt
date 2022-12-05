@@ -1,11 +1,9 @@
 package service
 
+import entity.Book
 import entity.BookStatus
 import entity.Borrow
-import repository.BookRepository
-import repository.BorrowRepository
-import repository.DataSource
-import repository.MemberRepository
+import repository.*
 import java.sql.Date
 import java.util.concurrent.TimeUnit
 
@@ -31,6 +29,10 @@ class Library(dataSource: DataSource) {
                 Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis((14 + it.countOfDueDateExtension * 7).toLong()))
             )
         }
+    }
+
+    fun printAllBooks() {
+        bookRepository.printAll().forEach(::println)
     }
 
     fun borrow(memberId: Int, serialNumber: Int) {

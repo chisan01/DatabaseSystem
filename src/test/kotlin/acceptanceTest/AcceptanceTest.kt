@@ -12,8 +12,8 @@ import java.util.concurrent.TimeUnit
 class AcceptanceTest {
 
     private val testDataSource = DataSource(
-        "localhost",
-        "3306",
+        "192.168.55.189",
+        "4567",
         "library",
         "1234"
     )
@@ -45,10 +45,10 @@ class AcceptanceTest {
 
         bookInfos.clear()
         books.clear()
-        repeat(5) {
+        for(i in 1..10) {
             val bookInfo = bookInfoRepository.addBookInfo(
                 BookInfo(
-                    title = "test$it",
+                    title = "test $i",
                     author = "chisan",
                     publisher = "출판사",
                     publishYear = 2022
