@@ -6,6 +6,6 @@ data class Member(
     val memberId: Int,
     val name: String,
     val password: String,
-    val returnDate: Date?,
-    val job: String
+    val suspendFinishDate: Date?,
+    val job: Job
 )
