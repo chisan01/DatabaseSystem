@@ -1,9 +1,6 @@
 package acceptanceTest
 
-import entity.Book
-import entity.BookInfo
-import entity.Job
-import entity.Member
+import entity.*
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -92,7 +89,7 @@ class AcceptanceTest {
     @Test
     fun `대학원생은 동시에 최대 2권까지 대출 가능`() {
         // given
-        for(i in 0..1) {
+        for (i in 0..1) {
             library.borrow(graduateStudent.memberId!!, books[i].serialNumber!!)
         }
         // when
@@ -107,7 +104,7 @@ class AcceptanceTest {
     @Test
     fun `교수는 동시에 최대 5권까지 대출 가능`() {
         // given
-        for(i in 0..4) {
+        for (i in 0..4) {
             library.borrow(professor.memberId!!, books[i].serialNumber!!)
         }
         // when
@@ -120,8 +117,17 @@ class AcceptanceTest {
     }
 
     @Test
-    fun `도서는 대출 시작일로부터 2주 안에 반납`() {
-
+    fun `도서 반납 기능 테스트`() {
+        // given
+        for (i in 0..1) {
+            library.borrow(graduateStudent.memberId!!, books[i].serialNumber!!)
+        }
+        // when
+        library.`return`(graduateStudent.memberId!!, books[0].serialNumber!!)
+        // then
+        Assertions.assertThat(
+            borrowRepository.findAllByMemberId(graduateStudent.memberId!!).filter { it.returnDate == null }.size
+        ).isEqualTo(1)
     }
 
     @Test
@@ -136,11 +142,6 @@ class AcceptanceTest {
 
     @Test
     fun `대출 연장은 대출마다 최대 1회 가능`() {
-
-    }
-
-    @Test
-    fun `반납일을 경과할 시 도서를 반납할때까지 도서관 이용이 제한된다`() {
 
     }
 
